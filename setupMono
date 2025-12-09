@@ -1,0 +1,58 @@
+#!/bin/bash
+
+set -e
+
+echo "=== Mono Framework Installer for Debian 10+ ==="
+
+# Ensure script is run with bash
+if [ -z "$BASH_VERSION" ]; then
+    echo "Please run this script with bash: bash setup_mono.sh"
+    exit 1
+fi
+
+# Ensure APT exists
+if ! command -v apt &> /dev/null; then
+    echo "APT package manager not found. This script is for Debian-based systems only."
+    exit 1
+fi
+
+echo "=> Installing required tools (dirmngr, ca-certificates, gnupg)..."
+sudo apt update
+sudo apt install -y dirmngr ca-certificates gnupg
+
+echo "=> Importing Mono repository GPG key..."
+sudo gpg --homedir /tmp \
+    --no-default-keyring \
+    --keyring gnupg-ring:/usr/share/keyrings/mono-official-archive-keyring.gpg \
+    --keyserver hkp://keyserver.ubuntu.com:80 \
+    --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+
+sudo chmod +r /usr/share/keyrings/mono-official-archive-keyring.gpg
+
+echo "=> Adding Mono repository to APT..."
+echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" \
+    | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+
+echo "=> Updating APT package index..."
+sudo apt update
+
+echo "=> Installing Mono Development Framework..."
+sudo apt install -y mono-devel
+
+echo "=> Installing 'run' command into /usr/local/bin ..."
+
+# Determine script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Check if run script exists
+if [ ! -f "$SCRIPT_DIR/run" ]; then
+    echo "ERROR: 'run' script not found in the same directory as setup_mono.sh"
+    exit 1
+fi
+
+sudo cp "$SCRIPT_DIR/run" /usr/local/bin/run
+sudo chmod +x /usr/local/bin/run
+
+echo "=== Installation complete! ==="
+echo "Mono installed. Global 'run' command available."
+echo "Try: run MyProgram"

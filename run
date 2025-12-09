@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Check if filename is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <filename without extension>"
+    exit 1
+fi
+
+FILENAME="$1"
+
+# Compile the C# file
+mcs "${FILENAME}.cs"
+if [ $? -ne 0 ]; then
+    echo "Compilation failed."
+    exit 2
+fi
+
+# Run the executable
+mono "${FILENAME}.exe"
+if [ $? -ne 0 ]; then
+    echo "Execution failed."
+    # Optionally, still remove the exe
+fi
+
+# Remove the executable
+rm -f "${FILENAME}.exe"
